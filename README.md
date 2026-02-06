@@ -1,19 +1,19 @@
-# cFtpfs - Sistema de archivos FTP en C
+# cFtpfs - FTP Filesystem in C
 
-Implementación en C del sistema de archivos FUSE para montar servidores FTP, basado en PyFtpfs.
+C implementation of a FUSE filesystem for mounting FTP servers, based on PyFtpfs.
 
-## Características
+## Features
 
-- **Monta servidores FTP como sistema de archivos local** usando FUSE
-- **Soporte para lectura y escritura** de archivos
-- **Cache de directorios** con timeout configurable (5 segundos)
-- **Sistema de escritura temporal** para compatibilidad con VS Code
-- **Soporte para formatos de listado FTP** Unix y Windows
-- **Conexiones thread-safe** con manejo de locks
-- **Múltiples opciones de conexión** (puerto, usuario, contraseña, codificación)
-- **Operaciones completas**: crear, leer, escribir, eliminar, renombrar, directorios
+- **Mounts FTP servers as a local filesystem** using FUSE
+- **Read and write support** for files
+- **Directory caching** with configurable timeout (default 5 seconds/30 seconds)
+- **Temporary write system** for VS Code compatibility
+- **Support for FTP listing formats** Unix and Windows
+- **Thread-safe connections** with lock handling
+- **Multiple connection options** (port, user, password, encoding)
+- **Full operations**: create, read, write, delete, rename, directories
 
-## Dependencias
+## Dependencies
 
 ### Ubuntu/Debian
 ```bash
@@ -30,200 +30,202 @@ sudo dnf install fuse3-devel libcurl-devel gcc make
 sudo pacman -S fuse3 curl gcc make
 ```
 
-## Instalación
+## Installation
 
-### Método 1: Script de instalación automático (Recomendado)
+### Method 1: Automatic Installation Script (Recommended)
 ```bash
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-El script detectará automáticamente tu sistema operativo e instalará todas las dependencias necesarias.
+The script will automatically detect your operating system and install all necessary dependencies.
 
-### Método 2: Compilación manual
+### Method 2: Manual Compilation
 ```bash
 make
 sudo make install
 ```
 
-### Desinstalación
+### Uninstall
 ```bash
 sudo make uninstall
-# o
+# or
 sudo /usr/local/bin/uninstall_cftpfs.sh
 ```
 
-## Uso
+## Usage
 
-### Sintaxis básica
+### Basic Syntax
 
 ```bash
-cftpfs <host> <mountpoint> [opciones]
+cftpfs <host> <mountpoint> [options]
 ```
 
-### Opciones
+### Options
 
-| Opción | Descripción | Default |
+| Option | Description | Default |
 |--------|-------------|---------|
-| `-p, --port=PUERTO` | Puerto FTP | 21 |
-| `-u, --user=USUARIO` | Usuario FTP | anonymous |
-| `-P, --password=PASS` | Contraseña FTP | (vacío) |
-| `-e, --encoding=ENC` | Codificación | utf-8 |
-| `-d, --debug` | Modo debug con logs detallados | - |
-| `-f, --foreground` | Ejecutar en primer plano | - |
-| `-h, --help` | Mostrar ayuda | - |
+| `-p, --port=PORT` | FTP Port | 21 |
+| `-u, --user=USER` | FTP User | anonymous |
+| `-P, --password=PASS` | FTP Password | (empty) |
+| `-e, --encoding=ENC` | Encoding | utf-8 |
+| `-d, --debug` | Debug mode with detailed logs | - |
+| `-f, --foreground` | Run in foreground | - |
+| `-h, --help` | Show help | - |
 
-### Ejemplos
+### Examples
 
-Montar en primer plano con usuario y contraseña:
+Mount in foreground with user and password:
 ```bash
-cftpfs ftp.example.com /mnt/ftp -u miusuario -P mipassword -f
+cftpfs ftp.example.com /mnt/ftp -u myuser -P mypassword -f
 ```
 
-Montar en background:
+Mount in background:
 ```bash
-cftpfs ftp.example.com /mnt/ftp -u usuario -P password
+cftpfs ftp.example.com /mnt/ftp -u user -P password
 ```
 
-Montar servidor FTP anónimo:
+Mount anonymous FTP server:
 ```bash
 cftpfs ftp.gnu.org /mnt/gnu -f
 ```
 
-### Desmontar
+### Unmount
 
 ```bash
 fusermount -u /mnt/ftp
 ```
 
-## Arquitectura
+## Architecture
 
-El proyecto está organizado en los siguientes módulos:
+The project is organized into the following modules:
 
 ```
 cFtpfs/
 ├── include/
-│   └── cftpfs.h          # Definiciones y estructuras de datos
+│   └── cftpfs.h          # Definitions and data structures
 ├── src/
-│   ├── main.c            # Punto de entrada y operaciones FUSE
-│   ├── ftp_client.c      # Cliente FTP usando libcurl
-│   ├── ftp_client_mock.c # Versión mock para testing
-│   ├── cache.c           # Sistema de cache de directorios
-│   ├── handles.c         # Gestión de handles de archivos
-│   └── parser.c          # Parser de listados FTP (Unix/Windows)
-├── Makefile              # Script de compilación
-├── install.sh            # Script de instalación automática
-└── README.md             # Documentación
+│   ├── main.c            # Entry point and FUSE operations
+│   ├── ftp_client.c      # FTP client using libcurl
+│   ├── ftp_client_mock.c # Mock version for testing
+│   ├── cache.c           # Directory cache system
+│   ├── handles.c         # File handle management
+│   └── parser.c          # FTP listing parser (Unix/Windows)
+├── Makefile              # Compilation script
+├── install.sh            # Automatic installation script
+└── README.md             # Documentation
 ```
 
-## Operaciones soportadas
+## Supported Operations
 
-- **Navegación**: `getattr`, `readdir`
-- **Lectura**: `open`, `read`
-- **Escritura**: `create`, `write`, `truncate`
-- **Gestión**: `unlink`, `mkdir`, `rmdir`, `rename`
-- **Metadatos**: `chmod`, `chown`, `utimens` (stubs - no soportados por FTP)
+- **Navigation**: `getattr`, `readdir`
+- **Reading**: `open`, `read`
+- **Writing**: `create`, `write`, `truncate`
+- **Management**: `unlink`, `mkdir`, `rmdir`, `rename`
+- **Metadata**: `chmod`, `chown`, `utimens` (stubs - not supported by standard FTP)
 
-## Sistema de Cache
+## Cache System
 
-- **Timeout**: 5 segundos para listados de directorios
-- **Estrategia**: Copy-on-read para evitar race conditions
-- **Invalidación**: Automática en operaciones de escritura
+- **Timeout**: Configurable (default 30s) for directory listings and attributes.
+- **Strategy**: Copy-on-read to avoid race conditions.
+- **Invalidation**: Automatic on write operations.
 
-## Limitaciones
+## Limitations
 
-- No soporta cambio de permisos reales (chmod) - FTP estándar no lo permite
-- No soporta cambio de propietario (chown)
-- No soporta cambio de timestamps (utimens)
-- Los symlinks son detectados pero no seguidos
-- Timeout de cache fijo en 5 segundos
+- Does not support real permission changes (chmod) - standard FTP does not allow it
+- Does not support owner changes (chown)
+- Does not support timestamp changes (utimens)
+- Symlinks are detected but not followed
+- Fixed cache timeout logic (though configurable via flags now)
 
-## Modos de Compilación
+## Compilation Modes
 
-### Versión Mock (desarrollo/testing)
+### Mock Version (development/testing)
+```bash
+make mock
+```
+Uses a simulated FTP client that returns test data. Useful for development and testing without a real FTP server.
+
+### Real Version (production)
 ```bash
 make
 ```
-Usa un cliente FTP simulado que retorna datos de prueba. Útil para desarrollo y testing sin necesidad de un servidor FTP real.
+Requires libcurl installed. Uses real FTP connections.
 
-### Versión Real (producción)
-```bash
-make real
-```
-Requiere libcurl instalado. Usa conexiones FTP reales.
+## Performance
 
-## Rendimiento
-
-- **Lectura**: Similar a cliente FTP estándar
-- **Escritura**: Optimizada para editores (VS Code) con archivos temporales
-- **Cache**: Reduce operaciones de red para listados de directorios
+- **Reading**: Similar to standard FTP client.
+- **Writing**: Optimized for editors (VS Code) with temporary files.
+- **Cache**: Reduces network operations for directory listings.
+- **Connection**: Uses persistent connections (Keep-Alive) to avoid handshake overhead.
 
 ## Troubleshooting
 
 ### Error: "fuse: device not found"
-Asegúrate de que el módulo FUSE está cargado:
+Ensure the FUSE module is loaded:
 ```bash
 sudo modprobe fuse
 ```
 
 ### Error: "Permission denied"
-Asegúrate de que tu usuario está en el grupo `fuse`:
+Ensure your user is in the `fuse` group:
 ```bash
 sudo usermod -a -G fuse $USER
-# Cerrar sesión y volver a iniciar para aplicar cambios
+# Log out and log back in to apply changes
 ```
 
-### Error de conexión FTP
-Verifica que el servidor FTP permite conexiones pasivas y que el puerto está abierto:
+### FTP Connection Error
+Verify that the FTP server allows passive connections and that the port is open:
 ```bash
 telnet ftp.example.com 21
 ```
 
 ### Error "munmap_chunk(): invalid pointer"
-Este error fue corregido en la versión actual. Si persiste, asegúrate de usar la última versión del código.
+This error was fixed in the current version. If it persists, ensure you are using the latest version of the code.
 
-## Diferencias con PyFtpfs
+## Differences from PyFtpfs
 
-- **Rendimiento**: Implementación nativa en C es más rápida
-- **Memoria**: Menor consumo de memoria
-- **Dependencias**: Usa libcurl en lugar de ftplib (Python)
-- **Threading**: Implementación manual con pthreads
+- **Performance**: Native C implementation is faster.
+- **Memory**: Lower memory consumption.
+- **Dependencies**: Uses libcurl instead of ftplib (Python).
+- **Threading**: Manual implementation with pthreads.
 
-## Licencia
+## License
 
-Apache 2.0 - Igual que el proyecto original PyFtpfs
+Apache 2.0 - Same as the original PyFtpfs project.
 
-## Autor
+## Author
 
-Implementación en C basada en PyFtpfs
+C implementation based on PyFtpfs.
 
-## Contribuir
+## Contributing
 
-Las contribuciones son bienvenidas. Por favor:
+Contributions are welcome. Please:
 
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-## Historial de Versiones
+## Version History
 
-- **v1.0.0** - Versión inicial completa
-  - Soporte completo de operaciones FUSE
-  - Sistema de cache
-  - Gestión de archivos temporales
-  - Parser de listados Unix/Windows
-  - Instalador automático
-  - Corrección de errores de memoria
+- **v1.0.0** - Initial complete version
+  - Full FUSE operations support
+  - Cache system
+  - Temporary file management
+  - Unix/Windows listing parser
+  - Automatic installer
+  - Memory error fixes
+  - Performance improvements (persistent connections)
 
-## Agradecimientos
+## Acknowledgements
 
-Este proyecto está basado en PyFtpfs y utiliza:
-- FUSE3 para el sistema de archivos en espacio de usuario
-- libcurl para conexiones FTP
-- pthreads para threading
+This project is based on PyFtpfs and uses:
+- FUSE3 for the user-space filesystem
+- libcurl for FTP connections
+- pthreads for threading
 
-## Contacto
+## Contact
 
-Para reportar bugs o solicitar funcionalidades, por favor abre un issue en el repositorio.# cFtpFs
+To report bugs or request features, please open an issue in the repository.
