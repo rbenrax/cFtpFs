@@ -1,0 +1,21 @@
+# Archivos generados por la compilación
+cftpfs
+build/
+*.o
+
+# Archivos temporales
+*~
+*.bak
+*.swp
+
+# Archivos de debug
+core
+core.*
+vgcore.*
+
+# Directorios de prueba
+/tmp/cftpfs_*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
